@@ -297,6 +297,12 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   z-index: 1;
 }
 
+.mv-handle::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+}
+
 .mv-handle:hover { box-shadow: 0 0 0 5px var(--lavender-glow); }
 .mv-handle:focus-visible { outline: none; box-shadow: 0 0 0 5px var(--lavender-glow); }
 .mv-handle.dragging { cursor: grabbing; z-index: 3; box-shadow: 0 0 0 7px var(--lavender-glow); }
@@ -313,20 +319,20 @@ label.pip .ms { font-size: 1.5rem; display: block; }
 .mv-clear {
   background: none;
   border: none;
-  color: var(--overlay0);
+  color: var(--red);
   font-size: 1rem;
   cursor: pointer;
   padding: 2px 3px;
   line-height: 1;
   border-radius: 3px;
-  transition: color 0.15s, opacity 0.15s;
+  transition: opacity 0.15s;
   opacity: 0;
   pointer-events: none;
   font-family: inherit;
 }
 
 .mv-clear.visible { opacity: 1; pointer-events: auto; }
-.mv-clear:hover { color: var(--red); }
+.mv-clear:hover { opacity: 0.7; }
 
 /* ── Button ──────────────────────────────────────────────── */
 
@@ -335,9 +341,9 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   color: var(--crust);
   border: none;
   border-radius: 8px;
-  padding: 0.65rem 2rem;
+  padding: 0.95rem 3.2rem;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 1.05rem;
   font-weight: 600;
   cursor: pointer;
   letter-spacing: 0.05em;
