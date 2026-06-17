@@ -1,5 +1,181 @@
 const SCRYFALL_RANDOM = "https://api.scryfall.com/cards/random";
 
+const MV_MIN = 0;
+const MV_MAX = 15;
+
+let loVal = MV_MIN;
+let hiVal = MV_MAX;
+
+// ── MV slider helpers ───────────────────────────────────────
+
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function valToPercent(v) {
+  return ((v - MV_MIN) / (MV_MAX - MV_MIN)) * 100;
+}
+
+function posToVal(clientX) {
+  const wrap = document.getElementById("mv-slider-wrap");
+  const rect = wrap.getBoundingClientRect();
+  const ratio = (clientX - rect.left) / rect.width;
+  return Math.round(clamp(ratio, 0, 1) * (MV_MAX - MV_MIN) + MV_MIN);
+}
+
+function updateSlider() {
+  const loHandle = document.getElementById("mv-handle-lo");
+  const hiHandle = document.getElementById("mv-handle-hi");
+  const fill = document.getElementById("mv-fill");
+  const display = document.getElementById("mv-display");
+  const clearBtn = document.getElementById("mv-clear");
+
+  const loPct = valToPercent(loVal);
+  const hiPct = valToPercent(hiVal);
+
+  loHandle.style.left = `${loPct}%`;
+  hiHandle.style.left = `${hiPct}%`;
+  fill.style.left = `${loPct}%`;
+  fill.style.width = `${hiPct - loPct}%`;
+
+  loHandle.setAttribute("aria-valuenow", loVal);
+  hiHandle.setAttribute("aria-valuenow", hiVal);
+
+  const isAny = loVal === MV_MIN && hiVal === MV_MAX;
+  if (isAny) {
+    display.textContent = "any";
+  } else if (loVal === hiVal) {
+    display.textContent = `= ${loVal}`;
+  } else {
+    display.textContent = `${loVal}–${hiVal}`;
+  }
+
+  clearBtn.classList.toggle("visible", !isAny);
+
+  // When both handles are at max, put lo on top so user can drag left
+  loHandle.style.zIndex = loVal === hiVal && hiVal === MV_MAX ? "3" : "1";
+  hiHandle.style.zIndex = loVal === hiVal && hiVal === MV_MAX ? "1" : "2";
+}
+
+// ── Drag state ──────────────────────────────────────────────
+
+let activeHandle = null;
+let pendingDirection = false;
+let dragStartX = 0;
+
+function getClientX(e) {
+  return e.touches ? e.touches[0].clientX : e.clientX;
+}
+
+function onDragMove(e) {
+  const clientX = getClientX(e);
+
+  if (pendingDirection) {
+    const dx = clientX - dragStartX;
+    if (Math.abs(dx) < 3) return;
+    activeHandle = dx < 0 ? "lo" : "hi";
+    pendingDirection = false;
+    document.getElementById(`mv-handle-${activeHandle}`).classList.add("dragging");
+  }
+
+  if (!activeHandle) return;
+
+  const v = posToVal(clientX);
+  if (activeHandle === "lo") {
+    loVal = clamp(v, MV_MIN, MV_MAX);
+    if (loVal > hiVal) hiVal = loVal;
+  } else {
+    hiVal = clamp(v, MV_MIN, MV_MAX);
+    if (hiVal < loVal) loVal = hiVal;
+  }
+
+  updateSlider();
+  saveFilters();
+}
+
+function onDragEnd() {
+  if (activeHandle) {
+    document.getElementById(`mv-handle-${activeHandle}`)?.classList.remove("dragging");
+  }
+  activeHandle = null;
+  pendingDirection = false;
+  document.removeEventListener("mousemove", onDragMove);
+  document.removeEventListener("mouseup", onDragEnd);
+  document.removeEventListener("touchmove", onDragMove);
+  document.removeEventListener("touchend", onDragEnd);
+}
+
+function startDrag(e, handle) {
+  e.preventDefault();
+  dragStartX = getClientX(e);
+
+  if (loVal === hiVal) {
+    pendingDirection = true;
+    activeHandle = null;
+  } else {
+    activeHandle = handle;
+    document.getElementById(`mv-handle-${handle}`).classList.add("dragging");
+  }
+
+  document.addEventListener("mousemove", onDragMove);
+  document.addEventListener("mouseup", onDragEnd);
+  document.addEventListener("touchmove", onDragMove, { passive: false });
+  document.addEventListener("touchend", onDragEnd);
+}
+
+// ── Slider events ───────────────────────────────────────────
+
+(function initSlider() {
+  const loHandle = document.getElementById("mv-handle-lo");
+  const hiHandle = document.getElementById("mv-handle-hi");
+  const wrap = document.getElementById("mv-slider-wrap");
+
+  loHandle.addEventListener("mousedown", (e) => startDrag(e, "lo"));
+  loHandle.addEventListener("touchstart", (e) => startDrag(e, "lo"), { passive: false });
+  hiHandle.addEventListener("mousedown", (e) => startDrag(e, "hi"));
+  hiHandle.addEventListener("touchstart", (e) => startDrag(e, "hi"), { passive: false });
+
+  // Click on track jumps nearest handle
+  wrap.addEventListener("mousedown", (e) => {
+    if (e.target.classList.contains("mv-handle")) return;
+    const v = posToVal(getClientX(e));
+    const handle = Math.abs(v - loVal) <= Math.abs(v - hiVal) ? "lo" : "hi";
+    if (handle === "lo") { loVal = v; if (loVal > hiVal) hiVal = loVal; }
+    else { hiVal = v; if (hiVal < loVal) loVal = hiVal; }
+    updateSlider();
+    saveFilters();
+    startDrag(e, handle);
+  });
+
+  // Keyboard
+  loHandle.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") loVal = clamp(loVal - 1, MV_MIN, MV_MAX);
+    else if (e.key === "ArrowRight") { loVal = clamp(loVal + 1, MV_MIN, MV_MAX); if (loVal > hiVal) hiVal = loVal; }
+    else return;
+    e.preventDefault();
+    updateSlider();
+    saveFilters();
+  });
+
+  hiHandle.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") { hiVal = clamp(hiVal - 1, MV_MIN, MV_MAX); if (hiVal < loVal) loVal = hiVal; }
+    else if (e.key === "ArrowRight") hiVal = clamp(hiVal + 1, MV_MIN, MV_MAX);
+    else return;
+    e.preventDefault();
+    updateSlider();
+    saveFilters();
+  });
+
+  document.getElementById("mv-clear").addEventListener("click", () => {
+    loVal = MV_MIN;
+    hiVal = MV_MAX;
+    updateSlider();
+    saveFilters();
+  });
+
+  updateSlider();
+})();
+
 // ── Query builder ──────────────────────────────────────────
 
 function buildQuery(colors, within) {
@@ -114,12 +290,13 @@ async function fetchCommander() {
   const colors = [
     ...form.querySelectorAll('input[name="colors"]:checked'),
   ].map((el) => el.value);
-  // mana value operator + single value
-  const mvOp = document.getElementById("mv-op")?.value ?? "=";
-  const mvRaw = document.getElementById("mv-value")?.value.trim() ?? "";
 
   let query = buildQuery(colors, false);
-  if (mvRaw !== "") query += ` cmc${mvOp}${parseInt(mvRaw, 10)}`;
+  const isAny = loVal === MV_MIN && hiVal === MV_MAX;
+  if (!isAny) {
+    if (loVal === hiVal) query += ` cmc=${loVal}`;
+    else query += ` cmc>=${loVal} cmc<=${hiVal}`;
+  }
 
   container.innerHTML = skeletonHTML();
 
@@ -168,9 +345,7 @@ const STORAGE_KEY = "commander-filters";
 
 function saveFilters() {
   const colors = [...document.querySelectorAll('input[name="colors"]:checked')].map((el) => el.value);
-  const mvOp = document.getElementById("mv-op")?.value ?? "=";
-  const mvValue = document.getElementById("mv-value")?.value ?? "";
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvOp, mvValue }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvLo: loVal, mvHi: hiVal }));
 }
 
 function restoreFilters() {
@@ -182,10 +357,9 @@ function restoreFilters() {
     const el = document.querySelector(`input[name="colors"][value="${c}"]`);
     if (el) el.checked = true;
   });
-  const mvOpInput = document.getElementById("mv-op");
-  const mvValueInput = document.getElementById("mv-value");
-  if (saved.mvOp && mvOpInput) mvOpInput.value = saved.mvOp;
-  if (saved.mvValue && mvValueInput) mvValueInput.value = saved.mvValue;
+  if (typeof saved.mvLo === "number") loVal = clamp(saved.mvLo, MV_MIN, MV_MAX);
+  if (typeof saved.mvHi === "number") hiVal = clamp(saved.mvHi, MV_MIN, MV_MAX);
+  updateSlider();
 }
 
 // ── Event listeners ────────────────────────────────────────

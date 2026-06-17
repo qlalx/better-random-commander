@@ -43,17 +43,20 @@
             </label>
           </div>
         </div>
-        <div class="control-group mv-group">
-          <span class="control-label">mv</span>
+      </div>
 
-          <div class="mv-inputs">
-            <select id="mv-op" class="mv-select" aria-label="mana operator">
-              <option value="=">=</option>
-              <option value=">=">≥</option>
-              <option value="<=">≤</option>
-            </select>
-            <input type="number" id="mv-value" class="mv-input" min="0" max="20" placeholder="any">
+      <div class="mv-row">
+        <span class="control-label mv-label">mv</span>
+        <div class="mv-slider-wrap" id="mv-slider-wrap">
+          <div class="mv-track" id="mv-track">
+            <div class="mv-fill" id="mv-fill"></div>
           </div>
+          <div class="mv-handle" id="mv-handle-lo" role="slider" aria-label="Minimum mana value" aria-valuemin="0" aria-valuemax="15" aria-valuenow="0" tabindex="0"></div>
+          <div class="mv-handle" id="mv-handle-hi" role="slider" aria-label="Maximum mana value" aria-valuemin="0" aria-valuemax="15" aria-valuenow="15" tabindex="0"></div>
+        </div>
+        <div class="mv-right">
+          <span class="mv-display" id="mv-display">any</span>
+          <button type="button" class="mv-clear" id="mv-clear" aria-label="Clear mana value filter">✕</button>
         </div>
       </div>
 
