@@ -525,7 +525,7 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   width: 100%;
 }
 
-.disclaimer a {
+.disclaimer-copyright { margin-top: 0.5rem; }
   color: var(--subtext0);
   text-decoration: none;
 }
