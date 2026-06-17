@@ -171,6 +171,7 @@ function startDrag(e, handle) {
   });
 
   document.getElementById("mv-clear").addEventListener("click", () => {
+    onDragEnd(); // terminate any in-progress drag before resetting
     loVal = MV_MIN;
     hiVal = MV_MAX;
     updateSlider();
