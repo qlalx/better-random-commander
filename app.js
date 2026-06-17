@@ -196,12 +196,8 @@ function restoreFilters() {
   });
   const mvMinInput = document.getElementById("mv-min");
   const mvMaxInput = document.getElementById("mv-max");
-  const mvRangeMin = document.getElementById("mv-range-min");
-  const mvRangeMax = document.getElementById("mv-range-max");
   if (saved.mvMin) mvMinInput.value = saved.mvMin;
   if (saved.mvMax) mvMaxInput.value = saved.mvMax;
-  if (saved.mvMin) mvRangeMin.value = saved.mvMin;
-  if (saved.mvMax) mvRangeMax.value = saved.mvMax;
 }
 
 // ── Event listeners ────────────────────────────────────────
@@ -250,41 +246,113 @@ document.addEventListener("click", (e) => {
   btn.closest(".card-image-wrapper")?.classList.toggle("flipped");
 });
 
-// Range slider <-> inputs sync
-(function wireMvRange() {
-  const rmin = document.getElementById("mv-range-min");
-  const rmax = document.getElementById("mv-range-max");
-  const imin = document.getElementById("mv-min");
-  const imax = document.getElementById("mv-max");
-  if (!rmin || !rmax || !imin || !imax) return;
+// Single visual range slider with two handles
+function initMvSlider() {
+  const slider = document.getElementById('mv-slider');
+  const track = slider?.querySelector('.track');
+  const fill = slider?.querySelector('.range-fill');
+  const thumbMin = document.getElementById('mv-thumb-min');
+  const thumbMax = document.getElementById('mv-thumb-max');
+  const inputMin = document.getElementById('mv-min');
+  const inputMax = document.getElementById('mv-max');
+  if (!slider || !track || !fill || !thumbMin || !thumbMax || !inputMin || !inputMax) return;
 
-  function clampRanges() {
-    let min = parseInt(rmin.value, 10);
-    let max = parseInt(rmax.value, 10);
-    if (min > max) {
-      // keep a minimum gap of 0 by swapping
-      const tmp = min; min = max; max = tmp;
-    }
-    rmin.value = min; rmax.value = max;
-    imin.value = min;
-    imax.value = max;
+  const MIN = parseInt(inputMin.min || '0', 10);
+  const MAX = parseInt(inputMin.max || '20', 10);
+
+  function valueToPercent(v) { return ((v - MIN) / (MAX - MIN)) * 100; }
+  function percentToValue(p) { return Math.round(MIN + (p / 100) * (MAX - MIN)); }
+
+  function setPositions(minVal, maxVal) {
+    const pMin = valueToPercent(minVal);
+    const pMax = valueToPercent(maxVal);
+    thumbMin.style.left = pMin + '%';
+    thumbMax.style.left = pMax + '%';
+    fill.style.left = pMin + '%';
+    fill.style.width = (pMax - pMin) + '%';
+    thumbMin.setAttribute('aria-valuenow', String(minVal));
+    thumbMax.setAttribute('aria-valuenow', String(maxVal));
   }
 
-  rmin.addEventListener('input', () => { clampRanges(); });
-  rmax.addEventListener('input', () => { clampRanges(); });
+  function clamp(v, a = MIN, b = MAX) { return Math.min(b, Math.max(a, v)); }
 
-  imin.addEventListener('input', () => {
-    const v = imin.value === '' ? parseInt(rmin.min, 10) : parseInt(imin.value, 10);
-    rmin.value = v;
-    if (parseInt(rmin.value,10) > parseInt(rmax.value,10)) rmax.value = rmin.value;
-  });
-  imax.addEventListener('input', () => {
-    const v = imax.value === '' ? parseInt(rmax.max, 10) : parseInt(imax.value, 10);
-    rmax.value = v;
-    if (parseInt(rmax.value,10) < parseInt(rmin.value,10)) rmin.value = rmax.value;
-  });
-})();
+  // Initialize from inputs (or defaults)
+  let curMin = inputMin.value === '' ? MIN : clamp(parseInt(inputMin.value, 10));
+  let curMax = inputMax.value === '' ? MAX : clamp(parseInt(inputMax.value, 10));
+  if (curMin > curMax) { const t = curMin; curMin = curMax; curMax = t; }
+  setPositions(curMin, curMax);
 
-// Restore filters then fetch on first load
+  function pointerMoveHandler(e, thumbIsMin) {
+    const rect = track.getBoundingClientRect();
+    const clientX = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0;
+    let pct = ((clientX - rect.left) / rect.width) * 100;
+    pct = Math.min(100, Math.max(0, pct));
+    const val = clamp(percentToValue(pct));
+    if (thumbIsMin) {
+      curMin = Math.min(val, curMax);
+    } else {
+      curMax = Math.max(val, curMin);
+    }
+    inputMin.value = String(curMin);
+    inputMax.value = String(curMax);
+    setPositions(curMin, curMax);
+  }
+
+  function startPointerDrag(e, thumbIsMin) {
+    e.preventDefault();
+    const id = e.pointerId;
+    const move = (ev) => pointerMoveHandler(ev, thumbIsMin);
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); saveFilters(); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    // handle initial move
+    pointerMoveHandler(e, thumbIsMin);
+  }
+
+  thumbMin.addEventListener('pointerdown', (e) => startPointerDrag(e, true));
+  thumbMax.addEventListener('pointerdown', (e) => startPointerDrag(e, false));
+
+  // Keyboard support
+  function thumbKeydown(e, thumbIsMin) {
+    let delta = 0;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') delta = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') delta = 1;
+    if (delta === 0) return;
+    e.preventDefault();
+    if (thumbIsMin) {
+      curMin = clamp(curMin + delta);
+      if (curMin > curMax) curMin = curMax;
+    } else {
+      curMax = clamp(curMax + delta);
+      if (curMax < curMin) curMax = curMin;
+    }
+    inputMin.value = String(curMin);
+    inputMax.value = String(curMax);
+    setPositions(curMin, curMax);
+    saveFilters();
+  }
+
+  thumbMin.addEventListener('keydown', (e) => thumbKeydown(e, true));
+  thumbMax.addEventListener('keydown', (e) => thumbKeydown(e, false));
+
+  // Sync numeric inputs -> thumbs
+  inputMin.addEventListener('input', () => {
+    const v = inputMin.value === '' ? MIN : clamp(parseInt(inputMin.value, 10));
+    curMin = Math.min(v, curMax);
+    inputMin.value = String(curMin);
+    setPositions(curMin, curMax);
+    saveFilters();
+  });
+  inputMax.addEventListener('input', () => {
+    const v = inputMax.value === '' ? MAX : clamp(parseInt(inputMax.value, 10));
+    curMax = Math.max(v, curMin);
+    inputMax.value = String(curMax);
+    setPositions(curMin, curMax);
+    saveFilters();
+  });
+}
+
+// Restore filters, initialize slider, then fetch on first load
 restoreFilters();
+initMvSlider();
 fetchCommander();
