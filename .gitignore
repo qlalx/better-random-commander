@@ -1,0 +1,15 @@
+# Node/Python/OS defaults
+.DS_Store
+node_modules/
+.env
+
+# Domain docs and ADRs (recommended to keep out of repo if private)
+CONTEXT.md
+CONTEXT-*.md
+docs/adr/
+**/CONTEXT.md
+**/docs/adr/
+
+# Editor
+.vscode/
+.idea/
