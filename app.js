@@ -2,6 +2,7 @@ const SCRYFALL_RANDOM = "https://api.scryfall.com/cards/random";
 
 const MV_MIN = 0;
 const MV_MAX = 15;
+const HANDLE_R = 7; // px — half handle width; track is inset by this on each side
 
 let loVal = MV_MIN;
 let hiVal = MV_MAX;
@@ -13,13 +14,16 @@ function clamp(v, min, max) {
 }
 
 function valToPercent(v) {
-  return ((v - MV_MIN) / (MV_MAX - MV_MIN)) * 100;
+  const wrapW = 180;
+  const trackW = wrapW - 2 * HANDLE_R;
+  const px = ((v - MV_MIN) / (MV_MAX - MV_MIN)) * trackW + HANDLE_R;
+  return (px / wrapW) * 100;
 }
 
 function posToVal(clientX) {
   const wrap = document.getElementById("mv-slider-wrap");
   const rect = wrap.getBoundingClientRect();
-  const ratio = (clientX - rect.left) / rect.width;
+  const ratio = (clientX - rect.left - HANDLE_R) / (rect.width - 2 * HANDLE_R);
   return Math.round(clamp(ratio, 0, 1) * (MV_MAX - MV_MIN) + MV_MIN);
 }
 
@@ -43,7 +47,7 @@ function updateSlider() {
 
   const isAny = loVal === MV_MIN && hiVal === MV_MAX;
   if (isAny) {
-    display.textContent = "any";
+    display.textContent = "—";
   } else if (loVal === hiVal) {
     display.textContent = `= ${loVal}`;
   } else {
