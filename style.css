@@ -250,6 +250,8 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  position: relative;
+  z-index: 10;
 }
 
 .mv-slider-wrap {
@@ -332,7 +334,9 @@ label.pip .ms { font-size: 1.5rem; display: block; }
 }
 
 .mv-clear.visible { opacity: 1; pointer-events: auto; }
-.mv-clear:hover { opacity: 0.7; }
+@media (hover: hover) {
+  .mv-clear:hover { opacity: 0.7; }
+}
 
 /* ── Button ──────────────────────────────────────────────── */
 

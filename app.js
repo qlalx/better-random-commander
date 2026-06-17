@@ -170,13 +170,21 @@ function startDrag(e, handle) {
     saveFilters();
   });
 
-  document.getElementById("mv-clear").addEventListener("click", () => {
-    onDragEnd(); // terminate any in-progress drag before resetting
+  function doClear() {
+    onDragEnd();
     loVal = MV_MIN;
     hiVal = MV_MAX;
     updateSlider();
     saveFilters();
-  });
+  }
+
+  document.getElementById("mv-clear").addEventListener("touchstart", (e) => {
+    e.preventDefault();    // blocks synthetic mousedown/click that the handle could intercept
+    e.stopPropagation();   // prevents handle touchstart from firing for the same touch
+    doClear();
+  }, { passive: false });
+
+  document.getElementById("mv-clear").addEventListener("click", doClear);
 
   updateSlider();
 })();
