@@ -440,6 +440,9 @@ label.pip .ms { font-size: 1.5rem; display: block; }
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 640px) {
+  /* Slightly narrower page padding and font on phones */
+  body { padding: 1rem 0.6rem; font-size: 14px; }
+
   .content { width: min(88vw, 100%); }
 
   .controls { flex-direction: column; width: 100%; }
@@ -447,6 +450,7 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   .control-group {
     width: 100%;
     justify-content: center;
+    padding: 0.45rem 0.6rem;
   }
 
   .control-group + .control-group::before {
@@ -459,17 +463,44 @@ label.pip .ms { font-size: 1.5rem; display: block; }
 
   .btn-row { width: min(88vw, 100%); }
 
-  /* Slightly reduce card size on small screens (~10%) */
+  /* Compact cards on small screens (~15% total reduction) */
   .card,
   .skeleton-card,
   .error-state {
-    max-width: 376px; /* ~90% of 418px */
-    padding: 1.1rem;
-    gap: 0.75rem;
+    max-width: 338px; /* smaller than before */
+    padding: 1rem;
+    gap: 0.5rem;
   }
 
-  /* Slightly tighten image radius on small screens */
+  .skeleton-image { border-radius: 8px; }
+  .card-image-inner { border-radius: 8px; }
+
+  /* Reduce image and text density */
   .card-image-inner, .skeleton-image {
-    border-radius: 9px;
+    aspect-ratio: 5 / 7;
+    max-height: calc(72vw); /* keeps images from getting very tall */
+  }
+
+  .flip-btn {
+    font-size: 0.85rem;
+    padding: 0.22rem 0.5rem;
+    bottom: 0.6rem;
+  }
+
+  .card-links a { font-size: 0.72rem; }
+
+  /* Slightly smaller primary button */
+  .btn-random { padding: 0.5rem 1.25rem; font-size: 0.82rem; }
+
+  /* Tighten other elements to save vertical space */
+  .controls { gap: 0.5rem; }
+  .pill-option span { padding: 0.22rem 0.5rem; }
+
+  /* Extra compact mode for very small phones */
+  @media (max-width: 420px) {
+    body { font-size: 13px; }
+    .card, .skeleton-card, .error-state { max-width: 300px; padding: 0.8rem; }
+    .card-image-inner, .skeleton-image { max-height: calc(68vw); }
+    .btn-random { padding: 0.45rem 1rem; }
   }
 }
