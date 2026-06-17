@@ -591,7 +591,7 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   .card-links a { font-size: 0.72rem; }
 
   /* Slightly smaller primary button */
-  .btn-random { padding: 0.5rem 1.25rem; font-size: 0.82rem; }
+
 
   /* Tighten other elements to save vertical space */
   .controls { gap: 0.5rem; }
@@ -601,6 +601,6 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   @media (max-width: 420px) {
     body { font-size: 13px; }
     .card, .skeleton-card, .error-state { max-width: 290px; padding: 0.75rem; }
-    .btn-random { padding: 0.45rem 1rem; }
+
   }
 }
