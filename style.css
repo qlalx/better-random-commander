@@ -226,17 +226,12 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   transition: border-color 0.15s;
 }
 
-/* Dual-handle range layout */
-.mv-inputs { display: inline-flex; align-items: center; gap: 0.4rem; margin-left: 0.6rem; }
-.mv-range-sep { color: var(--overlay0); font-size: 0.9rem; }
-.mv-range { width: 100%; margin-top: 0.35rem; display: flex; gap: 0.2rem; }
-.mv-range input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
-.mv-range input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: var(--surface0); border-radius: 999px; }
-.mv-range input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--lavender); margin-top: -4px; box-shadow: 0 0 0 3px rgba(180,190,254,0.12); }
-.mv-range input[type="range"]:focus { outline: none; }
-/* For overlap, ensure the top thumb is above */
-#mv-range-max { position: relative; z-index: 2; }
-#mv-range-min { position: relative; z-index: 1; }
+/* Simple operator + single input layout */
+.mv-inputs { display: inline-flex; align-items: center; gap: 0.5rem; margin-left: 0.6rem; }
+.mv-select { background: var(--surface0); border: 1px solid var(--surface1); color: var(--text); padding: 0.25rem 0.5rem; border-radius: 6px; font-family: inherit; font-size: 0.82rem; }
+.mv-select:focus { outline: none; border-color: var(--lavender); }
+.mv-input { width: 3.4rem; }
+
 .mv-input:focus {
   outline: none;
   border-color: var(--lavender);

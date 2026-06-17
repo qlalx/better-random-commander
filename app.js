@@ -114,24 +114,12 @@ async function fetchCommander() {
   const colors = [
     ...form.querySelectorAll('input[name="colors"]:checked'),
   ].map((el) => el.value);
-  // mana value range: read min/max helpers
-  const mvMinRaw = document.getElementById("mv-min").value.trim();
-  const mvMaxRaw = document.getElementById("mv-max").value.trim();
-  const mvMin = mvMinRaw === "" ? null : parseInt(mvMinRaw, 10);
-  const mvMax = mvMaxRaw === "" ? null : parseInt(mvMaxRaw, 10);
+  // mana value operator + single value
+  const mvOp = document.getElementById("mv-op")?.value ?? "=";
+  const mvRaw = document.getElementById("mv-value")?.value.trim() ?? "";
 
   let query = buildQuery(colors, false);
-  if (mvMin !== null && mvMax !== null) {
-    if (mvMin === mvMax) query += ` cmc=${mvMin}`;
-    else {
-      // Scryfall supports range via separate predicates
-      query += ` cmc>=${mvMin} cmc<=${mvMax}`;
-    }
-  } else if (mvMin !== null) {
-    query += ` cmc>=${mvMin}`;
-  } else if (mvMax !== null) {
-    query += ` cmc<=${mvMax}`;
-  }
+  if (mvRaw !== "") query += ` cmc${mvOp}${parseInt(mvRaw, 10)}`;
 
   container.innerHTML = skeletonHTML();
 
@@ -180,9 +168,9 @@ const STORAGE_KEY = "commander-filters";
 
 function saveFilters() {
   const colors = [...document.querySelectorAll('input[name="colors"]:checked')].map((el) => el.value);
-  const mvMin = document.getElementById("mv-min").value;
-  const mvMax = document.getElementById("mv-max").value;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvMin, mvMax }));
+  const mvOp = document.getElementById("mv-op")?.value ?? "=";
+  const mvValue = document.getElementById("mv-value")?.value ?? "";
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvOp, mvValue }));
 }
 
 function restoreFilters() {
@@ -194,10 +182,10 @@ function restoreFilters() {
     const el = document.querySelector(`input[name="colors"][value="${c}"]`);
     if (el) el.checked = true;
   });
-  const mvMinInput = document.getElementById("mv-min");
-  const mvMaxInput = document.getElementById("mv-max");
-  if (saved.mvMin) mvMinInput.value = saved.mvMin;
-  if (saved.mvMax) mvMaxInput.value = saved.mvMax;
+  const mvOpInput = document.getElementById("mv-op");
+  const mvValueInput = document.getElementById("mv-value");
+  if (saved.mvOp && mvOpInput) mvOpInput.value = saved.mvOp;
+  if (saved.mvValue && mvValueInput) mvValueInput.value = saved.mvValue;
 }
 
 // ── Event listeners ────────────────────────────────────────
@@ -219,23 +207,6 @@ document.getElementById("filter-form").addEventListener("change", (e) => {
     }
   }
 
-  // If mv inputs changed, sync ranges
-  if (e.target.id === "mv-min" || e.target.id === "mv-max") {
-    const minInput = document.getElementById("mv-min");
-    const maxInput = document.getElementById("mv-max");
-    const rmin = document.getElementById("mv-range-min");
-    const rmax = document.getElementById("mv-range-max");
-    const minVal = minInput.value === "" ? parseInt(rmin.min, 10) : parseInt(minInput.value, 10);
-    const maxVal = maxInput.value === "" ? parseInt(rmax.max, 10) : parseInt(maxInput.value, 10);
-    if (minVal > maxVal) {
-      // keep them valid by clamping
-      if (e.target.id === "mv-min") maxInput.value = minVal;
-      else minInput.value = maxVal;
-    }
-    rmin.value = minInput.value === "" ? rmin.min : minInput.value;
-    rmax.value = maxInput.value === "" ? rmax.max : maxInput.value;
-  }
-
   saveFilters();
 });
 
@@ -246,113 +217,6 @@ document.addEventListener("click", (e) => {
   btn.closest(".card-image-wrapper")?.classList.toggle("flipped");
 });
 
-// Single visual range slider with two handles
-function initMvSlider() {
-  const slider = document.getElementById('mv-slider');
-  const track = slider?.querySelector('.track');
-  const fill = slider?.querySelector('.range-fill');
-  const thumbMin = document.getElementById('mv-thumb-min');
-  const thumbMax = document.getElementById('mv-thumb-max');
-  const inputMin = document.getElementById('mv-min');
-  const inputMax = document.getElementById('mv-max');
-  if (!slider || !track || !fill || !thumbMin || !thumbMax || !inputMin || !inputMax) return;
-
-  const MIN = parseInt(inputMin.min || '0', 10);
-  const MAX = parseInt(inputMin.max || '20', 10);
-
-  function valueToPercent(v) { return ((v - MIN) / (MAX - MIN)) * 100; }
-  function percentToValue(p) { return Math.round(MIN + (p / 100) * (MAX - MIN)); }
-
-  function setPositions(minVal, maxVal) {
-    const pMin = valueToPercent(minVal);
-    const pMax = valueToPercent(maxVal);
-    thumbMin.style.left = pMin + '%';
-    thumbMax.style.left = pMax + '%';
-    fill.style.left = pMin + '%';
-    fill.style.width = (pMax - pMin) + '%';
-    thumbMin.setAttribute('aria-valuenow', String(minVal));
-    thumbMax.setAttribute('aria-valuenow', String(maxVal));
-  }
-
-  function clamp(v, a = MIN, b = MAX) { return Math.min(b, Math.max(a, v)); }
-
-  // Initialize from inputs (or defaults)
-  let curMin = inputMin.value === '' ? MIN : clamp(parseInt(inputMin.value, 10));
-  let curMax = inputMax.value === '' ? MAX : clamp(parseInt(inputMax.value, 10));
-  if (curMin > curMax) { const t = curMin; curMin = curMax; curMax = t; }
-  setPositions(curMin, curMax);
-
-  function pointerMoveHandler(e, thumbIsMin) {
-    const rect = track.getBoundingClientRect();
-    const clientX = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0;
-    let pct = ((clientX - rect.left) / rect.width) * 100;
-    pct = Math.min(100, Math.max(0, pct));
-    const val = clamp(percentToValue(pct));
-    if (thumbIsMin) {
-      curMin = Math.min(val, curMax);
-    } else {
-      curMax = Math.max(val, curMin);
-    }
-    inputMin.value = String(curMin);
-    inputMax.value = String(curMax);
-    setPositions(curMin, curMax);
-  }
-
-  function startPointerDrag(e, thumbIsMin) {
-    e.preventDefault();
-    const id = e.pointerId;
-    const move = (ev) => pointerMoveHandler(ev, thumbIsMin);
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); saveFilters(); };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-    // handle initial move
-    pointerMoveHandler(e, thumbIsMin);
-  }
-
-  thumbMin.addEventListener('pointerdown', (e) => startPointerDrag(e, true));
-  thumbMax.addEventListener('pointerdown', (e) => startPointerDrag(e, false));
-
-  // Keyboard support
-  function thumbKeydown(e, thumbIsMin) {
-    let delta = 0;
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') delta = -1;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') delta = 1;
-    if (delta === 0) return;
-    e.preventDefault();
-    if (thumbIsMin) {
-      curMin = clamp(curMin + delta);
-      if (curMin > curMax) curMin = curMax;
-    } else {
-      curMax = clamp(curMax + delta);
-      if (curMax < curMin) curMax = curMin;
-    }
-    inputMin.value = String(curMin);
-    inputMax.value = String(curMax);
-    setPositions(curMin, curMax);
-    saveFilters();
-  }
-
-  thumbMin.addEventListener('keydown', (e) => thumbKeydown(e, true));
-  thumbMax.addEventListener('keydown', (e) => thumbKeydown(e, false));
-
-  // Sync numeric inputs -> thumbs
-  inputMin.addEventListener('input', () => {
-    const v = inputMin.value === '' ? MIN : clamp(parseInt(inputMin.value, 10));
-    curMin = Math.min(v, curMax);
-    inputMin.value = String(curMin);
-    setPositions(curMin, curMax);
-    saveFilters();
-  });
-  inputMax.addEventListener('input', () => {
-    const v = inputMax.value === '' ? MAX : clamp(parseInt(inputMax.value, 10));
-    curMax = Math.max(v, curMin);
-    inputMax.value = String(curMax);
-    setPositions(curMin, curMax);
-    saveFilters();
-  });
-}
-
-// Restore filters, initialize slider, then fetch on first load
+// Restore filters then fetch on first load
 restoreFilters();
-initMvSlider();
 fetchCommander();
