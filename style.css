@@ -559,7 +559,8 @@ label.pip .ms { font-size: 1.5rem; display: block; }
     border-top: 1px solid var(--surface1);
   }
 
-  .btn-row { width: min(88vw, 100%); }
+  .btn-row { width: auto; }
+  .btn-random { font-size: 1.15rem; padding: 0.95rem 3.2rem; }
 
   /* Compact cards on small screens without constraining height */
   .card,
