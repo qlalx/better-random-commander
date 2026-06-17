@@ -114,10 +114,24 @@ async function fetchCommander() {
   const colors = [
     ...form.querySelectorAll('input[name="colors"]:checked'),
   ].map((el) => el.value);
-  const mvOp = document.querySelector('input[name="mv-op"]:checked')?.value ?? "=";
-  const mvRaw = document.getElementById("mv-value").value.trim();
+  // mana value range: read min/max helpers
+  const mvMinRaw = document.getElementById("mv-min").value.trim();
+  const mvMaxRaw = document.getElementById("mv-max").value.trim();
+  const mvMin = mvMinRaw === "" ? null : parseInt(mvMinRaw, 10);
+  const mvMax = mvMaxRaw === "" ? null : parseInt(mvMaxRaw, 10);
+
   let query = buildQuery(colors, false);
-  if (mvRaw !== "") query += ` cmc${mvOp}${parseInt(mvRaw, 10)}`;
+  if (mvMin !== null && mvMax !== null) {
+    if (mvMin === mvMax) query += ` cmc=${mvMin}`;
+    else {
+      // Scryfall supports range via separate predicates
+      query += ` cmc>=${mvMin} cmc<=${mvMax}`;
+    }
+  } else if (mvMin !== null) {
+    query += ` cmc>=${mvMin}`;
+  } else if (mvMax !== null) {
+    query += ` cmc<=${mvMax}`;
+  }
 
   container.innerHTML = skeletonHTML();
 
@@ -166,9 +180,9 @@ const STORAGE_KEY = "commander-filters";
 
 function saveFilters() {
   const colors = [...document.querySelectorAll('input[name="colors"]:checked')].map((el) => el.value);
-  const mvOp = document.querySelector('input[name="mv-op"]:checked')?.value ?? "=";
-  const mvValue = document.getElementById("mv-value").value;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvOp, mvValue }));
+  const mvMin = document.getElementById("mv-min").value;
+  const mvMax = document.getElementById("mv-max").value;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvMin, mvMax }));
 }
 
 function restoreFilters() {
@@ -180,10 +194,14 @@ function restoreFilters() {
     const el = document.querySelector(`input[name="colors"][value="${c}"]`);
     if (el) el.checked = true;
   });
-  const mvOpEl = document.querySelector(`input[name="mv-op"][value="${saved.mvOp}"]`);
-  if (mvOpEl) mvOpEl.checked = true;
-  const mvInput = document.getElementById("mv-value");
-  if (saved.mvValue) mvInput.value = saved.mvValue;
+  const mvMinInput = document.getElementById("mv-min");
+  const mvMaxInput = document.getElementById("mv-max");
+  const mvRangeMin = document.getElementById("mv-range-min");
+  const mvRangeMax = document.getElementById("mv-range-max");
+  if (saved.mvMin) mvMinInput.value = saved.mvMin;
+  if (saved.mvMax) mvMaxInput.value = saved.mvMax;
+  if (saved.mvMin) mvRangeMin.value = saved.mvMin;
+  if (saved.mvMax) mvRangeMax.value = saved.mvMax;
 }
 
 // ── Event listeners ────────────────────────────────────────
@@ -204,6 +222,24 @@ document.getElementById("filter-form").addEventListener("change", (e) => {
       document.querySelector('input[name="colors"][value="C"]').checked = false;
     }
   }
+
+  // If mv inputs changed, sync ranges
+  if (e.target.id === "mv-min" || e.target.id === "mv-max") {
+    const minInput = document.getElementById("mv-min");
+    const maxInput = document.getElementById("mv-max");
+    const rmin = document.getElementById("mv-range-min");
+    const rmax = document.getElementById("mv-range-max");
+    const minVal = minInput.value === "" ? parseInt(rmin.min, 10) : parseInt(minInput.value, 10);
+    const maxVal = maxInput.value === "" ? parseInt(rmax.max, 10) : parseInt(maxInput.value, 10);
+    if (minVal > maxVal) {
+      // keep them valid by clamping
+      if (e.target.id === "mv-min") maxInput.value = minVal;
+      else minInput.value = maxVal;
+    }
+    rmin.value = minInput.value === "" ? rmin.min : minInput.value;
+    rmax.value = maxInput.value === "" ? rmax.max : maxInput.value;
+  }
+
   saveFilters();
 });
 
@@ -213,6 +249,41 @@ document.addEventListener("click", (e) => {
   if (!btn) return;
   btn.closest(".card-image-wrapper")?.classList.toggle("flipped");
 });
+
+// Range slider <-> inputs sync
+(function wireMvRange() {
+  const rmin = document.getElementById("mv-range-min");
+  const rmax = document.getElementById("mv-range-max");
+  const imin = document.getElementById("mv-min");
+  const imax = document.getElementById("mv-max");
+  if (!rmin || !rmax || !imin || !imax) return;
+
+  function clampRanges() {
+    let min = parseInt(rmin.value, 10);
+    let max = parseInt(rmax.value, 10);
+    if (min > max) {
+      // keep a minimum gap of 0 by swapping
+      const tmp = min; min = max; max = tmp;
+    }
+    rmin.value = min; rmax.value = max;
+    imin.value = min;
+    imax.value = max;
+  }
+
+  rmin.addEventListener('input', () => { clampRanges(); });
+  rmax.addEventListener('input', () => { clampRanges(); });
+
+  imin.addEventListener('input', () => {
+    const v = imin.value === '' ? parseInt(rmin.min, 10) : parseInt(imin.value, 10);
+    rmin.value = v;
+    if (parseInt(rmin.value,10) > parseInt(rmax.value,10)) rmax.value = rmin.value;
+  });
+  imax.addEventListener('input', () => {
+    const v = imax.value === '' ? parseInt(rmax.max, 10) : parseInt(imax.value, 10);
+    rmax.value = v;
+    if (parseInt(rmax.value,10) < parseInt(rmin.value,10)) rmin.value = rmax.value;
+  });
+})();
 
 // Restore filters then fetch on first load
 restoreFilters();
