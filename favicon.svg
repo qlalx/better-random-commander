@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Color pips (clockwise: W, U, B, R, G) -->
+  <circle cx="16"   cy="4"    r="3.6" fill="#faf4e4" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
+  <circle cx="27.5" cy="12.3" r="3.6" fill="#aac8ff" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
+  <circle cx="23.1" cy="25.7" r="3.6" fill="#9088b0" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
+  <circle cx="8.9"  cy="25.7" r="3.6" fill="#f8a0b8" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
+  <circle cx="4.5"  cy="12.3" r="3.6" fill="#b8eeb3" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
+</svg>

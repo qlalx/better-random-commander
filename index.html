@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Better Random Commander</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mana-font@latest/css/mana.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <div class="content">
+      <div id="card-container"></div>
+
+      <form id="filter-form">
+      <div class="controls">
+        <div class="control-group">
+          <div class="color-pips">
+            <label class="pip" title="White">
+              <input type="checkbox" name="colors" value="W">
+              <i class="ms ms-w ms-cost ms-shadow"></i>
+            </label>
+            <label class="pip" title="Blue">
+              <input type="checkbox" name="colors" value="U">
+              <i class="ms ms-u ms-cost ms-shadow"></i>
+            </label>
+            <label class="pip" title="Black">
+              <input type="checkbox" name="colors" value="B">
+              <i class="ms ms-b ms-cost ms-shadow"></i>
+            </label>
+            <label class="pip" title="Red">
+              <input type="checkbox" name="colors" value="R">
+              <i class="ms ms-r ms-cost ms-shadow"></i>
+            </label>
+            <label class="pip" title="Green">
+              <input type="checkbox" name="colors" value="G">
+              <i class="ms ms-g ms-cost ms-shadow"></i>
+            </label>
+            <label class="pip" title="Colorless">
+              <input type="checkbox" name="colors" value="C">
+              <i class="ms ms-c ms-cost ms-shadow"></i>
+            </label>
+          </div>
+        </div>
+        <div class="control-group mv-group">
+          <span class="control-label">mv</span>
+          <div class="pill-toggle">
+            <label class="pill-option">
+              <input type="radio" name="mv-op" value="=" checked>
+              <span>=</span>
+            </label>
+            <label class="pill-option">
+              <input type="radio" name="mv-op" value="<=">
+              <span>≤</span>
+            </label>
+            <label class="pill-option">
+              <input type="radio" name="mv-op" value=">=">
+              <span>≥</span>
+            </label>
+          </div>
+          <input type="number" id="mv-value" class="mv-input" min="0" max="20" placeholder="any">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn-random">New Better Random Commander</button>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light/dark mode">☀️</button>
+      </div>
+    </form>
+    </div>
+
+    <footer class="disclaimer">
+      <p>Powered by <a href="https://scryfall.com" target="_blank" rel="noopener noreferrer">Scryfall</a>.</p>
+      <p>Unofficial Fan Content permitted under the <a href="https://company.wizards.com/en/legal/fancontentpolicy" target="_blank" rel="noopener noreferrer">Fan Content Policy</a>. Not approved/endorsed by Wizards of the Coast. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
