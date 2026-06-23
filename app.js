@@ -61,15 +61,18 @@ function renderHistory() {
 
   if (commanderHistory.length === 0) {
     strip.hidden = true;
-    toggle.hidden = true;
+    toggle.style.visibility = "hidden";
     return;
   }
 
   const wasHidden = strip.hidden;
   strip.hidden = false;
-  toggle.hidden = false;
+  toggle.style.visibility = "";
 
-  if (wasHidden) strip.classList.add("collapsed");
+  if (wasHidden) {
+    const savedCollapsed = localStorage.getItem("commander-history-collapsed") !== "false";
+    strip.classList.toggle("collapsed", savedCollapsed);
+  }
   updateToggleLabel();
 
   const reversed = [...commanderHistory].reverse();
@@ -87,6 +90,7 @@ function renderHistory() {
 document.getElementById("history-toggle").addEventListener("click", () => {
   const strip = document.getElementById("history-strip");
   strip.classList.toggle("collapsed");
+  localStorage.setItem("commander-history-collapsed", strip.classList.contains("collapsed"));
   updateToggleLabel();
 });
 
