@@ -513,6 +513,48 @@ label.pip .ms { font-size: 1.5rem; display: block; }
 .error-icon { font-size: 1.75rem; }
 .error-state p { font-size: 0.85rem; padding: 0 1rem; }
 
+/* ── Commander History ───────────────────────────────────── */
+
+#history-strip {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+  width: 100%;
+  padding: 0.25rem 0;
+}
+
+#history-strip::-webkit-scrollbar { display: none; }
+
+.history-item {
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, transform 0.12s;
+}
+
+.history-item:hover {
+  border-color: var(--lavender);
+  transform: translateY(-2px);
+}
+
+.history-item:focus-visible {
+  outline: none;
+  border-color: var(--lavender);
+}
+
+.history-thumb {
+  width: 60px;
+  aspect-ratio: 5 / 7;
+  border-radius: 4px;
+  display: block;
+  object-fit: cover;
+}
+
 /* ── Footer ──────────────────────────────────────────────── */
 
 .disclaimer {
@@ -594,6 +636,8 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   }
 
   .card-links a { font-size: 0.72rem; }
+
+  .history-thumb { width: 50px; }
 
   /* Slightly smaller primary button */
 

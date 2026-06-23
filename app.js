@@ -7,6 +7,54 @@ const HANDLE_R = 7; // px — half handle width; track is inset by this on each 
 let loVal = MV_MIN;
 let hiVal = MV_MAX;
 
+// ── Commander History ──────────────────────────────────────
+
+const HISTORY_KEY = "commander-history";
+const HISTORY_LIMIT = 5;
+
+let currentCard = null;
+let commanderHistory = [];
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    commanderHistory = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(commanderHistory)) commanderHistory = [];
+  } catch {
+    commanderHistory = [];
+  }
+}
+
+function saveHistory() {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(commanderHistory));
+}
+
+function pushToHistory(card) {
+  commanderHistory.unshift(card);
+  if (commanderHistory.length > HISTORY_LIMIT) commanderHistory.length = HISTORY_LIMIT;
+  saveHistory();
+  renderHistory();
+}
+
+function renderHistory() {
+  const strip = document.getElementById("history-strip");
+  if (commanderHistory.length === 0) {
+    strip.hidden = true;
+    return;
+  }
+  strip.hidden = false;
+  const reversed = [...commanderHistory].reverse();
+  strip.innerHTML = reversed.map((card, i) => {
+    const faces = card.card_faces ?? [];
+    const isDFC = faces.length === 2 && faces[0].image_uris;
+    const img = isDFC ? faces[0].image_uris.normal : card.image_uris?.normal ?? "";
+    const originalIndex = commanderHistory.length - 1 - i;
+    return `<button class="history-item" data-index="${originalIndex}" title="${escHtml(card.name)}" type="button" aria-label="Restore ${escHtml(card.name)}">
+      <img src="${img}" alt="${escHtml(card.name)}" class="history-thumb">
+    </button>`;
+  }).join("");
+}
+
 // ── MV slider helpers ───────────────────────────────────────
 
 function clamp(v, min, max) {
@@ -300,6 +348,9 @@ async function fetchCommander() {
   const form = document.getElementById("filter-form");
   const container = document.getElementById("card-container");
 
+  if (currentCard) pushToHistory(currentCard);
+  currentCard = null;
+
   const colors = [
     ...form.querySelectorAll('input[name="colors"]:checked'),
   ].map((el) => el.value);
@@ -325,6 +376,7 @@ async function fetchCommander() {
     }
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const card = await resp.json();
+    currentCard = card;
     container.innerHTML = cardHTML(card);
   } catch {
     container.innerHTML = errorHTML(
@@ -404,6 +456,19 @@ document.addEventListener("click", (e) => {
   btn.closest(".card-image-wrapper")?.classList.toggle("flipped");
 });
 
+// History item click — restore card without modifying history
+document.addEventListener("click", (e) => {
+  const item = e.target.closest(".history-item");
+  if (!item) return;
+  const idx = parseInt(item.dataset.index, 10);
+  const card = commanderHistory[idx];
+  if (!card) return;
+  currentCard = card;
+  document.getElementById("card-container").innerHTML = cardHTML(card);
+});
+
 // Restore filters then fetch on first load
+loadHistory();
+renderHistory();
 restoreFilters();
 fetchCommander();
