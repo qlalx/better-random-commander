@@ -356,6 +356,7 @@ label.pip .ms { font-size: 1.5rem; display: block; }
 
 .btn-random:hover { opacity: 0.88; }
 .btn-random:active { transform: scale(0.97); opacity: 0.8; }
+.btn-random:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 /* ── Skeleton ────────────────────────────────────────────── */
 
@@ -515,6 +516,10 @@ label.pip .ms { font-size: 1.5rem; display: block; }
 
 /* ── Commander History ───────────────────────────────────── */
 
+#history-toggle {
+  display: none; /* desktop: always show strip, no toggle needed */
+}
+
 #history-strip {
   display: flex;
   gap: 0.5rem;
@@ -638,6 +643,21 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   .card-links a { font-size: 0.72rem; }
 
   .history-thumb { width: 50px; }
+
+  #history-toggle {
+    display: inline-flex;
+    background: none;
+    border: none;
+    color: var(--subtext0);
+    font-family: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    padding: 0.1rem 0.3rem;
+    margin-top: -0.65rem;
+  }
+
+  #history-strip.collapsed { display: none; }
 
   /* Slightly smaller primary button */
 

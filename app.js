@@ -11,6 +11,7 @@ let hiVal = MV_MAX;
 
 const HISTORY_KEY = "commander-history";
 const HISTORY_LIMIT = 5;
+const CURRENT_KEY = "commander-current";
 
 let currentCard = null;
 let commanderHistory = [];
@@ -29,20 +30,48 @@ function saveHistory() {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(commanderHistory));
 }
 
+function loadCurrentCard() {
+  try {
+    const raw = localStorage.getItem(CURRENT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function pushToHistory(card) {
+  if (commanderHistory[0]?.id === card.id) return;
   commanderHistory.unshift(card);
   if (commanderHistory.length > HISTORY_LIMIT) commanderHistory.length = HISTORY_LIMIT;
   saveHistory();
   renderHistory();
 }
 
+function updateToggleLabel() {
+  const strip = document.getElementById("history-strip");
+  const toggle = document.getElementById("history-toggle");
+  const collapsed = strip.classList.contains("collapsed");
+  toggle.textContent = collapsed ? "▾ Recent" : "▴ Recent";
+  toggle.setAttribute("aria-expanded", String(!collapsed));
+}
+
 function renderHistory() {
   const strip = document.getElementById("history-strip");
+  const toggle = document.getElementById("history-toggle");
+
   if (commanderHistory.length === 0) {
     strip.hidden = true;
+    toggle.hidden = true;
     return;
   }
+
+  const wasHidden = strip.hidden;
   strip.hidden = false;
+  toggle.hidden = false;
+
+  if (wasHidden) strip.classList.add("collapsed");
+  updateToggleLabel();
+
   const reversed = [...commanderHistory].reverse();
   strip.innerHTML = reversed.map((card, i) => {
     const faces = card.card_faces ?? [];
@@ -54,6 +83,12 @@ function renderHistory() {
     </button>`;
   }).join("");
 }
+
+document.getElementById("history-toggle").addEventListener("click", () => {
+  const strip = document.getElementById("history-strip");
+  strip.classList.toggle("collapsed");
+  updateToggleLabel();
+});
 
 // ── MV slider helpers ───────────────────────────────────────
 
@@ -347,6 +382,9 @@ function skeletonHTML() {
 async function fetchCommander() {
   const form = document.getElementById("filter-form");
   const container = document.getElementById("card-container");
+  const btn = document.getElementById("btn-random");
+
+  btn.disabled = true;
 
   if (currentCard) pushToHistory(currentCard);
   currentCard = null;
@@ -377,11 +415,14 @@ async function fetchCommander() {
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const card = await resp.json();
     currentCard = card;
+    localStorage.setItem(CURRENT_KEY, JSON.stringify(card));
     container.innerHTML = cardHTML(card);
   } catch {
     container.innerHTML = errorHTML(
       "Scryfall is unavailable. Try again later."
     );
+  } finally {
+    btn.disabled = false;
   }
 }
 
@@ -463,7 +504,6 @@ document.addEventListener("click", (e) => {
   const idx = parseInt(item.dataset.index, 10);
   const card = commanderHistory[idx];
   if (!card) return;
-  currentCard = card;
   document.getElementById("card-container").innerHTML = cardHTML(card);
 });
 
@@ -471,4 +511,5 @@ document.addEventListener("click", (e) => {
 loadHistory();
 renderHistory();
 restoreFilters();
+currentCard = loadCurrentCard();
 fetchCommander();

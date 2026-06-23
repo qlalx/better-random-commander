@@ -12,6 +12,7 @@
   <main>
     <div class="content">
       <div id="card-container"></div>
+      <button id="history-toggle" type="button" hidden aria-expanded="false">▾ Recent</button>
       <div id="history-strip" hidden></div>
 
       <form id="filter-form">
@@ -61,7 +62,7 @@
       </div>
 
       <div class="btn-row">
-        <button type="submit" class="btn-random" aria-label="Surprise me — show a random commander">Surprise Me</button>
+        <button type="submit" id="btn-random" class="btn-random" aria-label="Surprise me — show a random commander">Surprise Me</button>
         <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light/dark mode">☀️</button>
       </div>
     </form>
