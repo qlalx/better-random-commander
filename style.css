@@ -765,10 +765,10 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   /* Slightly narrower page padding and font on phones */
   body { padding: 1rem 0.6rem; font-size: 14px; }
 
-  .content { width: min(88vw, 100%); }
+  .content { width: 100%; }
 
   /* controls stay as a single row — color pips + pill remain inline */
-  .controls { max-width: 330px; justify-content: center; }
+  .controls { max-width: 100%; justify-content: center; }
 
   .btn-row { width: auto; }
   .btn-random { font-size: 1.15rem; padding: 0.95rem 3.2rem; }
