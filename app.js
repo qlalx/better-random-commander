@@ -1,4 +1,57 @@
 const SCRYFALL_RANDOM = "https://api.scryfall.com/cards/random";
+const SCRYFALL_CARD   = "https://api.scryfall.com/cards/";
+
+// ── Tags ───────────────────────────────────────────────────
+
+const TAGS = [
+  // Tribes (alphabetical)
+  { label: "Angels",        group: "tribe",   query: "t:angel" },
+  { label: "Cats",          group: "tribe",   query: "t:cat" },
+  { label: "Demons",        group: "tribe",   query: "t:demon" },
+  { label: "Dinosaurs",     group: "tribe",   query: "t:dinosaur" },
+  { label: "Dragons",       group: "tribe",   query: "t:dragon" },
+  { label: "Elves",         group: "tribe",   query: "t:elf" },
+  { label: "Faeries",       group: "tribe",   query: "t:faerie" },
+  { label: "Goblins",       group: "tribe",   query: "t:goblin" },
+  { label: "Humans",        group: "tribe",   query: "t:human" },
+  { label: "Knights",       group: "tribe",   query: "t:knight" },
+  { label: "Merfolk",       group: "tribe",   query: "t:merfolk" },
+  { label: "Ninjas",        group: "tribe",   query: "t:ninja" },
+  { label: "Pirates",       group: "tribe",   query: "t:pirate" },
+  { label: "Rogues",        group: "tribe",   query: "t:rogue" },
+  { label: "Slivers",       group: "tribe",   query: "t:sliver" },
+  { label: "Soldiers",      group: "tribe",   query: "t:soldier" },
+  { label: "Spirits",       group: "tribe",   query: "t:spirit" },
+  { label: "Vampires",      group: "tribe",   query: "t:vampire" },
+  { label: "Warriors",      group: "tribe",   query: "t:warrior" },
+  { label: "Wizards",       group: "tribe",   query: "t:wizard" },
+  { label: "Zombies",       group: "tribe",   query: "t:zombie" },
+  // Abilities (alphabetical)
+  { label: "Deathtouch",    group: "ability", query: "keyword:deathtouch" },
+  { label: "First Strike",  group: "ability", query: 'keyword:"first strike"' },
+  { label: "Flying",        group: "ability", query: "keyword:flying" },
+  { label: "Haste",         group: "ability", query: "keyword:haste" },
+  { label: "Hexproof",      group: "ability", query: "keyword:hexproof" },
+  { label: "Indestructible",group: "ability", query: "keyword:indestructible" },
+  { label: "Lifelink",      group: "ability", query: "keyword:lifelink" },
+  { label: "Menace",        group: "ability", query: "keyword:menace" },
+  { label: "Trample",       group: "ability", query: "keyword:trample" },
+  { label: "Vigilance",     group: "ability", query: "keyword:vigilance" },
+  // Themes (alphabetical)
+  { label: "Artifacts",     group: "theme",   query: "o:artifact" },
+  { label: "Counters",      group: "theme",   query: 'o:"+1/+1 counter"' },
+  { label: "Enchantments",  group: "theme",   query: "o:enchantment" },
+  { label: "Graveyard",     group: "theme",   query: "o:graveyard" },
+  { label: "Landfall",      group: "theme",   query: "o:landfall" },
+  { label: "Lifegain",      group: "theme",   query: 'o:"gain life"' },
+  { label: "Sacrifice",     group: "theme",   query: "o:sacrifice" },
+  { label: "Spellslinger",  group: "theme",   query: 'o:"instant or sorcery"' },
+  { label: "Tokens",        group: "theme",   query: 'o:"create a" o:token' },
+  { label: "Treasure",      group: "theme",   query: 'o:"treasure token"' },
+  { label: "Voltron",       group: "theme",   query: "o:equip" },
+];
+
+let activeTags = new Set();
 
 const MV_MIN = 0;
 const MV_MAX = 15;
@@ -92,6 +145,89 @@ document.getElementById("history-toggle").addEventListener("click", () => {
   strip.classList.toggle("collapsed");
   localStorage.setItem("commander-history-collapsed", strip.classList.contains("collapsed"));
   updateToggleLabel();
+});
+
+// ── Advanced Filters ───────────────────────────────────────
+
+const TAG_GROUPS = [
+  { key: "tribe",   label: "Tribe" },
+  { key: "ability", label: "Ability" },
+  { key: "theme",   label: "Theme" },
+];
+
+const ADV_OPEN_KEY = "commander-adv-open";
+let advOpen = localStorage.getItem(ADV_OPEN_KEY) === "true";
+
+function renderAdvFilters() {
+  const container = document.getElementById("tag-cloud");
+  const totalActive = activeTags.size;
+  const showBadge = totalActive > 0 && !advOpen;
+
+  let html = `<div class="adv-filters">
+    <div class="adv-header-row">
+      <button type="button" class="adv-header" aria-expanded="${advOpen}">
+        <span class="adv-label">advanced filters</span>
+        <span class="adv-rule" aria-hidden="true"></span>
+        ${showBadge ? `<span class="adv-badge">${totalActive}</span>` : ""}
+        <span class="adv-chevron" aria-hidden="true">${advOpen ? "▾" : "▸"}</span>
+      </button>${showBadge ? `<button type="button" class="adv-clear" aria-label="Clear all tag filters">✕</button>` : ""}
+    </div>`;
+
+  if (advOpen) {
+    html += `<div class="adv-body">`;
+    for (const group of TAG_GROUPS) {
+      const tagsInGroup = TAGS.filter((t) => t.group === group.key);
+      html += `<div class="adv-group">
+        <span class="adv-group-label">${group.label}</span>
+        <div class="adv-group-pills">`;
+      for (const tag of tagsInGroup) {
+        const isActive = activeTags.has(tag.label);
+        html += `<button type="button" class="tag-btn${isActive ? " active" : ""}" data-tag="${escHtml(tag.label)}" aria-pressed="${isActive}">${escHtml(tag.label)}</button>`;
+      }
+      html += `</div></div>`;
+    }
+    if (activeTags.size > 0) {
+      html += `<button type="button" class="adv-reset">clear all</button>`;
+    }
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+document.getElementById("tag-cloud").addEventListener("click", (e) => {
+  if (e.target.closest(".adv-clear")) {
+    activeTags.clear();
+    renderAdvFilters();
+    saveFilters();
+    return;
+  }
+
+  if (e.target.closest(".adv-header")) {
+    advOpen = !advOpen;
+    localStorage.setItem(ADV_OPEN_KEY, String(advOpen));
+    renderAdvFilters();
+    return;
+  }
+
+  if (e.target.closest(".adv-reset")) {
+    activeTags.clear();
+    renderAdvFilters();
+    saveFilters();
+    return;
+  }
+
+  const btn = e.target.closest(".tag-btn");
+  if (!btn) return;
+  const clicked = btn.dataset.tag;
+  if (activeTags.has(clicked)) {
+    activeTags.delete(clicked);
+  } else {
+    activeTags.add(clicked);
+  }
+  renderAdvFilters();
+  saveFilters();
 });
 
 // ── MV slider helpers ───────────────────────────────────────
@@ -342,6 +478,7 @@ function cardHTML(card) {
       <div class="card-links">
         <a href="${card.scryfall_uri}" target="_blank" rel="noopener noreferrer">Scryfall ↗</a>
         ${edhrec ? `<a href="${edhrec}" target="_blank" rel="noopener noreferrer">EDHREC ↗</a>` : ""}
+        <button class="share-btn" type="button" data-card-id="${card.id}" aria-label="Copy share link">Share</button>
       </div>
     </div>
   `;
@@ -397,7 +534,12 @@ async function fetchCommander() {
     ...form.querySelectorAll('input[name="colors"]:checked'),
   ].map((el) => el.value);
 
-  let query = buildQuery(colors, false);
+  const within = document.querySelector('input[name="match-mode"]:checked')?.value === "within";
+  let query = buildQuery(colors, within);
+  for (const label of activeTags) {
+    const tag = TAGS.find((t) => t.label === label);
+    if (tag) query += ` ${tag.query}`;
+  }
   const isAny = loVal === MV_MIN && hiVal === MV_MAX;
   if (!isAny) {
     if (loVal === hiVal) query += ` cmc=${loVal}`;
@@ -430,6 +572,49 @@ async function fetchCommander() {
   }
 }
 
+// ── Deep Link ──────────────────────────────────────────────
+
+async function fetchCardById(id) {
+  const container = document.getElementById("card-container");
+  const btn = document.getElementById("btn-random");
+
+  btn.disabled = true;
+  container.innerHTML = skeletonHTML();
+
+  try {
+    const resp = await fetch(`${SCRYFALL_CARD}${encodeURIComponent(id)}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const card = await resp.json();
+    currentCard = card;
+    localStorage.setItem(CURRENT_KEY, JSON.stringify(card));
+    container.innerHTML = cardHTML(card);
+  } catch {
+    container.innerHTML = errorHTML("Could not load the shared commander.");
+    currentCard = loadCurrentCard();
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function makeDeepLink(cardId) {
+  return `${location.origin}${location.pathname}?id=${encodeURIComponent(cardId)}`;
+}
+
+// Share button — event delegation survives innerHTML swaps
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".share-btn");
+  if (!btn) return;
+  const url = makeDeepLink(btn.dataset.cardId);
+  try {
+    await navigator.clipboard.writeText(url);
+    const prev = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(() => { btn.textContent = prev; }, 1500);
+  } catch {
+    window.prompt("Copy this link:", url);
+  }
+});
+
 // ── Theme ──────────────────────────────────────────────────
 
 const THEME_KEY = "commander-theme";
@@ -455,7 +640,8 @@ const STORAGE_KEY = "commander-filters";
 
 function saveFilters() {
   const colors = [...document.querySelectorAll('input[name="colors"]:checked')].map((el) => el.value);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvLo: loVal, mvHi: hiVal }));
+  const matchMode = document.querySelector('input[name="match-mode"]:checked')?.value ?? "exact";
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvLo: loVal, mvHi: hiVal, matchMode, tags: [...activeTags] }));
 }
 
 function restoreFilters() {
@@ -469,6 +655,13 @@ function restoreFilters() {
   });
   if (typeof saved.mvLo === "number") loVal = clamp(saved.mvLo, MV_MIN, MV_MAX);
   if (typeof saved.mvHi === "number") hiVal = clamp(saved.mvHi, MV_MIN, MV_MAX);
+
+  const modeEl = document.querySelector(`input[name="match-mode"][value="${saved.matchMode ?? "exact"}"]`);
+  if (modeEl) modeEl.checked = true;
+
+  if (saved.tag && TAGS.some((t) => t.label === saved.tag)) activeTags.add(saved.tag);
+  (saved.tags ?? []).filter((l) => TAGS.some((t) => t.label === l)).forEach((l) => activeTags.add(l));
+
   updateSlider();
 }
 
@@ -515,5 +708,12 @@ document.addEventListener("click", (e) => {
 loadHistory();
 renderHistory();
 restoreFilters();
-currentCard = loadCurrentCard();
-fetchCommander();
+renderAdvFilters();
+
+const _deepLinkId = new URLSearchParams(location.search).get("id");
+if (_deepLinkId) {
+  fetchCardById(_deepLinkId);
+} else {
+  currentCard = loadCurrentCard();
+  fetchCommander();
+}
