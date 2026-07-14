@@ -121,7 +121,8 @@ main {
   overflow-x: auto;
   flex-wrap: nowrap;
   scrollbar-width: none;
-  width: fit-content;
+  width: 100%;
+  max-width: 418px;
 }
 
 .controls::-webkit-scrollbar { display: none; }
@@ -767,6 +768,7 @@ label.pip .ms { font-size: 1.5rem; display: block; }
   .content { width: min(88vw, 100%); }
 
   /* controls stay as a single row — color pips + pill remain inline */
+  .controls { max-width: 330px; justify-content: center; }
 
   .btn-row { width: auto; }
   .btn-random { font-size: 1.15rem; padding: 0.95rem 3.2rem; }
