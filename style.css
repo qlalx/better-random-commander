@@ -134,25 +134,6 @@ main {
   padding: 0 0.75rem;
 }
 
-/* The pill's rounded border reads visually closer to the separator than
-   the pip circles do — trim the pip group's right padding to compensate */
-.control-group:first-child { padding-right: 0.5rem; }
-
-.control-group + .control-group {
-  position: relative;
-}
-
-.control-group + .control-group::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 60%;
-  background: var(--surface1);
-}
-
 /* Color pips inside control group */
 .color-pips {
   display: flex;
@@ -194,35 +175,6 @@ label.pip:has(input:checked) {
 }
 
 label.pip .ms { font-size: 1.5rem; display: block; }
-
-/* Pill toggle (match mode + mv operator) */
-.pill-toggle {
-  display: flex;
-  border-radius: 999px;
-  border: 1px solid var(--surface0);
-  overflow: hidden;
-  background: var(--surface0);
-}
-
-.pill-option { display: flex; cursor: pointer; }
-.pill-option input { display: none; }
-
-.pill-option span {
-  padding: 0.28rem 0.7rem;
-  font-size: 0.73rem;
-  color: var(--overlay0);
-  transition: background 0.15s, color 0.15s;
-  white-space: nowrap;
-  letter-spacing: 0.03em;
-}
-
-.pill-option:hover span { color: var(--subtext1); }
-
-.pill-option:has(input:checked) span {
-  background: var(--surface2);
-  color: var(--text);
-  font-weight: 600;
-}
 
 /* mv label + input */
 .control-label {
@@ -826,7 +778,6 @@ label.pip .ms { font-size: 1.5rem; display: block; }
 
   /* Tighten other elements to save vertical space */
   .controls { gap: 0.5rem; }
-  .pill-option span { padding: 0.22rem 0.5rem; }
 
   /* Extra compact mode for very small phones */
   @media (max-width: 420px) {

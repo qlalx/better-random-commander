@@ -534,8 +534,7 @@ async function fetchCommander() {
     ...form.querySelectorAll('input[name="colors"]:checked'),
   ].map((el) => el.value);
 
-  const within = document.querySelector('input[name="match-mode"]:checked')?.value === "within";
-  let query = buildQuery(colors, within);
+  let query = buildQuery(colors, false);
   for (const label of activeTags) {
     const tag = TAGS.find((t) => t.label === label);
     if (tag) query += ` ${tag.query}`;
@@ -640,8 +639,7 @@ const STORAGE_KEY = "commander-filters";
 
 function saveFilters() {
   const colors = [...document.querySelectorAll('input[name="colors"]:checked')].map((el) => el.value);
-  const matchMode = document.querySelector('input[name="match-mode"]:checked')?.value ?? "exact";
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvLo: loVal, mvHi: hiVal, matchMode, tags: [...activeTags] }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ colors, mvLo: loVal, mvHi: hiVal, tags: [...activeTags] }));
 }
 
 function restoreFilters() {
@@ -655,9 +653,6 @@ function restoreFilters() {
   });
   if (typeof saved.mvLo === "number") loVal = clamp(saved.mvLo, MV_MIN, MV_MAX);
   if (typeof saved.mvHi === "number") hiVal = clamp(saved.mvHi, MV_MIN, MV_MAX);
-
-  const modeEl = document.querySelector(`input[name="match-mode"][value="${saved.matchMode ?? "exact"}"]`);
-  if (modeEl) modeEl.checked = true;
 
   if (saved.tag && TAGS.some((t) => t.label === saved.tag)) activeTags.add(saved.tag);
   (saved.tags ?? []).filter((l) => TAGS.some((t) => t.label === l)).forEach((l) => activeTags.add(l));
